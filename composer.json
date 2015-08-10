@@ -1,0 +1,24 @@
+{
+	"name": "imrannaqvi/jsonrpc",
+	"description": "Provides the functionality to setup a JSON RPC Server.",
+	"type": "library",
+	"keywords": ["json","rpc","server"],
+	"homepage": "http://www.github.com/imrannaqvi/jsonrpc",
+	"license": "Apache License Version 2.0",
+	"authors": [{
+		"name": "Imran Naqvi",
+		"email": "imrannaqvi83@yahoo.com"
+	}],
+	"require": {
+		"php": ">=5.3.3",
+		"zendframework/zendframework": "2.2.10"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "~4.4"
+	},
+	"autoload": {
+		"classmap": [
+			"src/"
+		]
+	}
+}
