@@ -3,8 +3,6 @@ namespace JsonRpcTests;
 
 use imrannaqvi\JsonRpc\Server;
 use PHPUnit_Framework_TestCase;
-use Zend\Http\PhpEnvironment\Request;
-use Zend\Stdlib\Parameters;
 
 class BasicTests extends PHPUnit_Framework_TestCase
 {
@@ -19,9 +17,8 @@ class BasicTests extends PHPUnit_Framework_TestCase
 	public function testEmptyConfig()
 	{
 		$config = array();
-		$request = new Request();
 		$server = new Server($config, $this->serviceManager);
-		$response = $server->handle($request);
+		$response = $server->handle(new \Zend\Http\PhpEnvironment\Request());
 		$this->assertArrayHasKey('response', $response);
 		$this->assertNull($response['response']);
 		$this->assertArrayHasKey('error', $response);
@@ -36,15 +33,43 @@ class BasicTests extends PHPUnit_Framework_TestCase
 	{
 		$method = 'asdf';
 		$config = array();
-		$request = new Request();
-		$request->setMethod(Request::METHOD_POST);
-		$request->setPost(new Parameters(array(
-			'method' => $method
-		)));
 		$server = new Server($config, $this->serviceManager);
-		$response = $server->handle($request);
+		$response = $server->handle($this->assembleRequest($method));
 		$this->assertArrayHasKey('method', $response);
 		$this->assertInternalType('string', $response['method']);
 		$this->assertEquals($response['method'], $method);
+	}
+	
+	public function testConfigWithMethodInRequest()
+	{
+		$method = 'login';
+		$config = array(
+			'methods' => array(
+				'login' => array(
+					'model' => 'this/service/isnot/registered',
+				),
+			),
+		);
+		$server = new Server($config, $this->serviceManager);
+		$response = $server->handle($this->assembleRequest($method));
+		$this->assertArrayHasKey('method', $response);
+		$this->assertInternalType('string', $response['method']);
+		$this->assertEquals($response['method'], $method);
+		$this->assertArrayHasKey('error', $response);
+		$this->assertEquals($response['error'], 'model-not-found-as-service');
+	}
+	
+	public function assembleRequest($method = null, $params = array(), $token = null)
+	{
+		$request = new \Zend\Http\PhpEnvironment\Request();
+		$request->setMethod(\Zend\Http\PhpEnvironment\Request::METHOD_POST);
+		$post = array();
+		if($method) {
+			$post['method'] = $method;
+		}
+		if(is_array($params) && count($params)) {
+			$post['params'] = $params;
+		}
+		return $request->setPost(new \Zend\Stdlib\Parameters($post));
 	}
 }
