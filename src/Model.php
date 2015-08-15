@@ -15,7 +15,7 @@ class Model
 		$this->serviceLocator = $serviceLocator;
 	}
 	
-	public function setAuthenticationService(AuthenticationService $authentication)
+	public function setAuthenticationService(AuthenticationService $authentication = null)
 	{
 		$this->authentication = $authentication;
 	}

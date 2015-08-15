@@ -59,6 +59,53 @@ class BasicTests extends PHPUnit_Framework_TestCase
 		$this->assertEquals($response['error'], 'model-not-found-as-service');
 	}
 	
+	public function testConfigWithMethodAndModel()
+	{
+		//without method name in request
+		$method = 'login';
+		$config = array(
+			'methods' => array(
+				'login' => array(
+					'model' => 'JsonRpcTests\Models\Basic',
+				),
+			),
+		);
+		$server = new Server($config, $this->serviceManager);
+		$response = $server->handle($this->assembleRequest($method));
+		$this->assertArrayHasKey('error', $response);
+		$this->assertEquals($response['error'], 'model-method-not-defined');
+		//with wrong method name in request
+		$config = array(
+			'methods' => array(
+				'login' => array(
+					'model' => 'JsonRpcTests\Models\Basic',
+					'method' => 'asdf'
+				),
+			),
+		);
+		$server = new Server($config, $this->serviceManager);
+		$response = $server->handle($this->assembleRequest($method));
+		$this->assertArrayHasKey('error', $response);
+		$this->assertEquals($response['error'], 'model-method-not-found');
+		//with correct method name in request
+		$method = 'add';
+		$config = array(
+			'methods' => array(
+				'add' => array(
+					'model' => 'JsonRpcTests\Models\Basic',
+					'method' => 'add'
+				),
+			),
+		);
+		$server = new Server($config, $this->serviceManager);
+		$response = $server->handle($this->assembleRequest($method, array(
+			'a' => 1,
+			'b' => 2
+		)));
+		$this->assertArrayHasKey('response', $response);
+		$this->assertEquals($response['response'], 3);
+	}
+	
 	public function assembleRequest($method = null, $params = array(), $token = null)
 	{
 		$request = new \Zend\Http\PhpEnvironment\Request();
