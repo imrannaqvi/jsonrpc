@@ -66,7 +66,11 @@ class Server
 		$auth_header = $this->request->getHeader('Authorization');
 		if($auth_header) {
 			foreach($this->config->getAllAuthenticationServiceNames() as $key => $value) {
-				$authentication = $this->serviceLocator->get($value);
+				try {
+					$authentication = $this->serviceLocator->get($value);
+				} catch( \Zend\ServiceManager\Exception\ServiceNotFoundException $e) {
+					return $this->response->setError('authentication-not-found-as-service[' . $value . ']')->toArray();
+				}
 				$user = $authentication->getStorage()->read($auth_header);
 				if($user) {
 					$this->authentication = $authentication;
@@ -75,17 +79,20 @@ class Server
 			}
 		} elseif( array_key_exists('authentication', $item)) {
 			if(gettype($item['authentication']) === 'string') {
-				$this->authentication = $this->serviceLocator->get($this->config->getAuthenticationServiceName($item['authentication']));
+				try {
+					$this->authentication = $this->serviceLocator->get($this->config->getAuthenticationServiceName($item['authentication']));
+				} catch( \Zend\ServiceManager\Exception\ServiceNotFoundException $e) {
+					return $this->response->setError('authentication-not-found-as-service[' . $item['authentication'] . ']')->toArray();
+				}
 			}
 		}
 		//get user from authentication storage
-		if(
-			$this->authentication && (
-				$this->config->authenticationRequired ||
-				$item['authentication_required']
-			)
-		) {
-			$user = $this->authentication->getStorage()->read($this->request->getHeader('Authorization'));
+		if( $item['authentication_required']) {
+			if($this->authentication) {
+				$user = $this->authentication->getStorage()->read($auth_header);
+			} else {
+				return $this->response->setError('authentication-not-defined')->toArray();
+			}
 		}
 		//check if authentication is required but not passed
 		if(
